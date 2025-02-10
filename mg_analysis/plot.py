@@ -53,9 +53,6 @@ def visualize_m_scores(
         row = math.ceil(idx / n_cols)
         col = idx - (row - 1) * n_cols
 
-        if m_score_results["dataset"] == "":
-            continue
-
         scores_df = pd.DataFrame.from_dict(m_score_results["detailed_scores"])
         scores = scores_df["m_score"]
 
