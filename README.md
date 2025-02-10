@@ -1,9 +1,11 @@
 # llm_masc_gen
 
+Repository for the **Man Made Language Models? Evaluating LLMs’ Perpetuation of Masculine Generics Bias** paper.
+
 ## Repository Structure
 
 - [hn_db](hn_db) | files used for the human noun database
-  - [data](hn_db/data) | 
+  - [data](hn_db/data) | data used to create the human noun database
     - [animal_names](hn_db/data/animal_names)
     - [demonette](hn_db/data/demonette)
     - [full_db](hn_db/data/full_db)
@@ -15,7 +17,7 @@
   - [hscorer](hn_db/hscorer) | binary HN classification pipeline
     - [data](hn_db/hscorer/data)
     - [models](hn_db/hscorer/models)
-  - [tlfi_scraping](hn_db/tlfi_scraping) |
+  - [tlfi_scraping](hn_db/tlfi_scraping) | Playwright script to scrape TLFi + data
     - [dbs](hn_db/tlfi_scraping/dbs)
     - [words](hn_db/tlfi_scraping/words) | scraped words
 - [mg_analysis](mg_analysis) | files used for the masculine generics use in LLMs analysis
@@ -37,7 +39,7 @@ Our French human noun database was created using data from the following French 
 - [Wikidata](https://www.wikidata.org/wiki/Wikidata:Main_Page) (using the [Wikidata Query Service](https://query.wikidata.org/))
 - [TLFi](https://www.cnrtl.fr/definition/)
 
-For TLFi, we built a custom Playwright.js scraper to retrieve nouns (see [/hn_db/tlfi_scraping/README.md](/hn_db/tlfi_scraping/README.md)for usage).
+For TLFi, we built a custom Playwright.js scraper to retrieve nouns (see [/hn_db/tlfi_scraping/README.md](/hn_db/tlfi_scraping/README.md)  for usage).
 
 Data used to create the database is available as folders in [/hn_db/data](/hn_db/data). The full human noun database is located in the [/hn_db/data/full_db folder]([/hn_db/data/full_db]).
 
@@ -48,3 +50,5 @@ HScorer is a ML binary HN classification pipeline used to filter nouns from the 
 See [/hn_db/hscorer/README.md](/hn_db/hscorer/README.md) for usage.
 
 ## Analyzing Masculine Generics Use in LLM Instructions/Outputs
+
+See [/mg_analysis/README.md](/mg_analysis/README.md) for details.
