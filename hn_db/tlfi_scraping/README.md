@@ -7,10 +7,13 @@ Usage: tlfi_scraper [options]
 Scrape the TLF website for word definitions and other linguistic features.
 
 Options:
+
+```
   -V, --version       output the version number
-  -w, --words <file>  File containing the words to scrape.
+  -w, --words <file>  File containing the words to scrape. Can be JSON or CSV (see examples in /words folder). If no word file is provided, a predefined 'human noun search' will first be made in order to retrieve relevant words to scrape and add them to a JSON file.
   -r, --recursive     Recursive search
   -h, --help          Show help
+```
 
   ## Databases
 
