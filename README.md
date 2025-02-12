@@ -52,3 +52,13 @@ See [/hn_db/hscorer/README.md](/hn_db/hscorer/README.md) for usage.
 ## Analyzing Masculine Generics Use in LLM Instructions/Outputs
 
 See [/mg_analysis/README.md](/mg_analysis/README.md) for details.
+
+## Requirements
+
+Make sure to install the requirements before running any scripts.
+
+`pip install -r requirements.txt`
+
+## Citation
+
+TBA
