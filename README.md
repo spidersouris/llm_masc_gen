@@ -61,4 +61,8 @@ Make sure to install the requirements before running any scripts.
 
 ## Citation
 
-TBA
+If you use any of the data/scripts found in this repository, please make sure to cite our paper:
+
+```bibtex
+tba
+```
