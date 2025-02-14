@@ -23,6 +23,7 @@ Repository for the **Man Made Language Models? Evaluating LLMs’ Perpetuation o
 - [mg_analysis](mg_analysis) | files used for the masculine generics use in LLMs analysis
   - [dfs](mg_analysis/dfs) | instructions/outputs DataFrames
   - [eval](mg_analysis/eval) | data used to evaluate GPT 4o-mini ICL classifier
+    - [res](mg_analysis/eval/annot) | annotation files and script
   - [instr_outputs_mg_results](mg_analysis/instr_outputs_mg_results)
     - [qual_analysis](mg_analysis/instr_outputs_mg_results/qual_analysis) | examples of LLMs' responses with inclusive markers (except neutral). Note that some examples are wrongly detected as inclusive (mainly due to the "upper" rule which was triggered in case of weird generation or some acronym usage) — those were manually filtered before plotting language markers results (see [line 507 of mg_analysis/plot.py](https://github.com/spidersouris/llm_masc_gen/blob/main/mg_analysis/plot.py#L507)).
     - [real](mg_analysis/instr_outputs_mg_results/real) | results after GPT 4o-mini validation

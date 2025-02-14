@@ -3,7 +3,7 @@ usage: `annot.py [-h] [--create-tsv json_file output_tsv] [--kappa annotator1_ts
 Script to handle annotations.
 
 options:
-```bash
+```
   -h, --help            show this help message and exit
   --create-tsv json_file output_tsv
                         Create TSV file for annotation.
