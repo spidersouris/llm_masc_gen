@@ -1,12 +1,13 @@
-import pandas as pd
-import time
-import spacy
-import numpy as np
-from tqdm import tqdm
-from spacy.tokens import Doc
 import argparse
+import time
+from typing import cast
 
+import numpy as np
+import pandas as pd
+import spacy
 from load_lists import get_masc_gen_list, get_neutrals_list
+from spacy.tokens import Doc
+from tqdm import tqdm
 
 nlp_main = spacy.load("fr_dep_news_trf")  # main processing
 nlp_ent = spacy.load("fr_core_news_lg")  # NER
@@ -76,13 +77,23 @@ def has_person_ent(doc: Doc):
     return False
 
 
-def has_masc_gen(doc: Doc, masc_gen_words: list[str]):
+def has_masc_gen(
+    doc: Doc, masc_gen_words: list[str], return_nouns: bool = False
+) -> bool | list[str]:
     if not isinstance(doc, Doc):
         raise TypeError("doc must be a spacy Doc object")
 
+    masc_gen_tokens = []
+
     for token in doc:
         if token.lemma_ in masc_gen_words and token.pos_ == "NOUN":
-            return True
+            if return_nouns:
+                masc_gen_tokens.append(token.text)
+            else:
+                return True
+
+    if return_nouns:
+        return masc_gen_tokens
 
     return False
 
@@ -98,9 +109,71 @@ def has_neutral(doc: Doc, neutrals: list[str] = neutrals_dict):
     return False
 
 
-def save_to_pickle(df, dataset):
-    df.to_pickle(f"dfs/{dataset}/{dataset}_filtered_df.pkl")
-    print(f"\n\nSuccessfully saved to dfs/{dataset}/{dataset}_filtered_df.pkl")
+def save_to_pickle(df, dataset, label: str = "filtered"):
+    df.to_pickle(f"dfs/{dataset}/{dataset}_{label}_df.pkl")
+    print(f"\n\nSuccessfully saved to dfs/{dataset}/{dataset}_{label}_df.pkl")
+
+
+def get_masc_gen_instrs(
+    df: pd.DataFrame,
+    nlp_main: spacy.language.Language = nlp_main,
+    masc_gen_words: list[str] = masc_gen_list,
+    dataset: str | None = None,
+    batch_size: int = 32,
+    return_df: bool = False,
+):
+    modified_df = df.copy()
+
+    if dataset == "oracle":
+        columns_to_process = [
+            col for col in modified_df.columns if col.lower() in ["instruction"]
+        ]
+    elif dataset in ["oasst2", "hh_rlhf", "alpaca"]:
+        columns_to_process = [
+            col for col in modified_df.columns if "user" in col.lower()
+        ]
+
+    start_time = time.time()
+
+    for col in columns_to_process:
+        tqdm_desc = f"Processing column '{col}' | Dataset: {dataset}"
+        progress_bar = tqdm(total=len(modified_df), desc=tqdm_desc, leave=True)
+
+        non_na_indices = modified_df[col].index
+        non_na_texts = modified_df[col].tolist()
+
+        for batch_start in range(0, len(non_na_texts), batch_size):
+            batch_end = batch_start + batch_size
+            batch_indices = non_na_indices[batch_start:batch_end]
+            batch_texts = non_na_texts[batch_start:batch_end]
+
+            docs_main = list(nlp_main.pipe(batch_texts, batch_size=batch_size))
+
+            for idx, doc_main in zip(batch_indices, docs_main):
+                masc_gen_nouns = has_masc_gen(
+                    doc_main, masc_gen_words, return_nouns=True
+                )
+                if not masc_gen_nouns:
+                    modified_df.at[idx, col] = np.nan
+                    progress_bar.update(1)
+                else:
+                    if "masc_gen_nouns" not in modified_df.columns:
+                        modified_df["masc_gen_nouns"] = ""
+                    modified_df.at[idx, "masc_gen_nouns"] = ";".join(
+                        cast(list, masc_gen_nouns)
+                    )
+                    progress_bar.update(1)
+
+        progress_bar.close()
+
+    end_time = time.time()
+    elapsed_time_min = (end_time - start_time) / 60
+    print(f"\n\nTotal time taken: {elapsed_time_min:.2f} minutes")
+
+    save_to_pickle(modified_df, dataset, label="instructions_mg_only")
+
+    if return_df:
+        return modified_df
 
 
 def filter_human_in_out(
@@ -247,17 +320,35 @@ if __name__ == "__main__":
         choices=["oasst2", "oracle", "hh_rlhf", "alpaca"],
     )
 
+    parser.add_argument(
+        "--e2",
+        action="store_true",
+        help="Get MG only instructions from Experiment 2",
+    )
+
     args = parser.parse_args()
 
     if args.dataset == "oasst2":
         oasst2_df = pd.read_pickle("dfs/oasst2/oasst2_df.pkl")
-        filter_human_in_out(df=oasst2_df, dataset="oasst2", return_df=False)
+        if args.e2:
+            get_masc_gen_instrs(df=oasst2_df, dataset="oasst2", return_df=False)
+        else:
+            filter_human_in_out(df=oasst2_df, dataset="oasst2", return_df=False)
     elif args.dataset == "oracle":
         oracle_df = pd.read_pickle("dfs/oracle/oracle_df.pkl")
-        filter_human_in_out(df=oracle_df, dataset="oracle", return_df=False)
+        if args.e2:
+            get_masc_gen_instrs(df=oracle_df, dataset="oracle", return_df=False)
+        else:
+            filter_human_in_out(df=oracle_df, dataset="oracle", return_df=False)
     elif args.dataset == "hh_rlhf":
         hh_rlhf_df = pd.read_pickle("dfs/hh_rlhf/hh_rlhf_df.pkl")
-        filter_human_in_out(df=hh_rlhf_df, dataset="hh_rlhf", return_df=False)
+        if args.e2:
+            get_masc_gen_instrs(df=hh_rlhf_df, dataset="hh_rlhf", return_df=False)
+        else:
+            filter_human_in_out(df=hh_rlhf_df, dataset="hh_rlhf", return_df=False)
     elif args.dataset == "alpaca":
         alpaca_df = pd.read_pickle("dfs/alpaca/alpaca_df.pkl")
-        filter_human_in_out(df=alpaca_df, dataset="alpaca", return_df=False)
+        if args.e2:
+            get_masc_gen_instrs(df=alpaca_df, dataset="alpaca", return_df=False)
+        else:
+            filter_human_in_out(df=alpaca_df, dataset="alpaca", return_df=False)

@@ -25,5 +25,7 @@ WHERE
     ?entity schema:description ?entityDescription FILTER(LANG(?entityDescription) = "fr").
   }
   
+  # Remove entries with entityDescription "titre de noblesse" as a large part of the entries
+  # are duplicates but with different city names (e.g., "duc de Gênes, duc de Narbonne")
   FILTER (?entityDescription != "titre de noblesse"@fr || !BOUND(?entityDescription)).
 }
