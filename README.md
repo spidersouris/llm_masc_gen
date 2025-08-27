@@ -1,6 +1,6 @@
 # llm_masc_gen
 
-Repository for the **Man Made Language Models? Evaluating LLMs’ Perpetuation of Masculine Generics Bias** paper.
+Repository for the [**Man Made Language Models? Evaluating LLMs’ Perpetuation of Masculine Generics Bias**](https://arxiv.org/abs/2502.10577) paper.
 
 ## Repository Structure
 
@@ -65,5 +65,13 @@ Make sure to install the requirements before running any scripts.
 If you use any of the data/scripts found in this repository, please make sure to cite our paper:
 
 ```bibtex
-tba
+@misc{doyen2025manlanguagemodelsevaluating,
+      title={Man Made Language Models? Evaluating LLMs' Perpetuation of Masculine Generics Bias}, 
+      author={Enzo Doyen and Amalia Todirascu},
+      year={2025},
+      eprint={2502.10577},
+      archivePrefix={arXiv},
+      primaryClass={cs.CL},
+      url={https://arxiv.org/abs/2502.10577}, 
+}
 ```
