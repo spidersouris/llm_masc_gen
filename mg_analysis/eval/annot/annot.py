@@ -1,8 +1,10 @@
-import json
-import csv
-import re
-import ast
 import argparse
+import ast
+import csv
+import json
+import re
+import sys
+
 import pandas as pd
 from sklearn.metrics import cohen_kappa_score
 
@@ -112,7 +114,7 @@ def calculate_kappa(
     ann1 = annotations1["annotator_annotation"]
     ann2 = (
         annotations2["annotator_annotation"]
-        if not compare_gpt
+        if not compare_gpt and annotations2 is not None
         else annotations1["original_annotation"]
     )
 
@@ -122,9 +124,12 @@ def calculate_kappa(
         if ann1[key] != ann2[key]
     }
 
+    ann_1_label = "GPT-4o mini" if compare_gpt else "Annotator 1"
+    ann_2_label = "Agreed Annotation" if compare_gpt else "Annotator 2"
+
     print(f"Found {len(differences)} differences in annotations:")
     for idx, (value_1, value_2) in differences.items():
-        print(f"{idx+2}:\nAnnotator 1 = {value_1}\nAnnotator 2 = {value_2}")
+        print(f"{idx+2}:\n{ann_1_label} = {value_1}\n{ann_2_label} = {value_2}")
 
     return cohen_kappa_score(ann1, ann2)
 
@@ -144,7 +149,7 @@ if __name__ == "__main__":
         help="Calculate Kappa score between two annotators.",
     )
     parser.add_argument(
-        "--kappa_gpt",
+        "--kappa-gpt",
         nargs=1,
         metavar=("agreed_tsv"),
         help="Calculate Kappa score between GPT-4o mini and agreed annotation.",
@@ -154,7 +159,7 @@ if __name__ == "__main__":
     if args.create_tsv:
         json_data = load_json_data(args.create_tsv[0])
         prepare_annotation_tsv(json_data, args.create_tsv[1])
-        exit()
+        sys.exit(0)
 
     if args.kappa:
         annotations1 = load_annotations(args.kappa[0])
@@ -164,4 +169,4 @@ if __name__ == "__main__":
     if args.kappa_gpt:
         annotations1 = load_annotations(args.kappa_gpt[0])
         calculate_kappa(annotations1, None, compare_gpt=True)
-        exit()
+        sys.exit(0)

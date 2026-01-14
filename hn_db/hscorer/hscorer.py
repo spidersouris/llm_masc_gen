@@ -1,8 +1,9 @@
-import pandas as pd
-import numpy as np
-from nltk.corpus import wordnet as wn
+import traceback
 
+import numpy as np
+import pandas as pd
 from load_ft import model
+from nltk.corpus import wordnet as wn
 
 SUFFIX_FILE = "data/suffixes.csv"
 
@@ -241,6 +242,8 @@ class HScorer:
 
         except Exception as e:
             print(f"Error processing word '{word}': {e}")
+            # traceback
+            print(traceback.format_exc())
             return 0.0, 0.0
 
     def get_suffix_score(self, word: str):
@@ -256,14 +259,15 @@ class HScorer:
                 return 1
             return 0
         except Exception as e:
-            print(f"Error processing word '{word}': {e}")
+            print(f"Error processing suffix for word '{word}': {e}")
+            print(traceback.format_exc())
             return 0
 
     def load_suffix_file(self, file_path: str):
         """
         Load a list of suffixes from a file
         """
-        df = pd.read_csv(file_path, header=0, sep="\t")
+        df = pd.read_csv(file_path, header=0, sep=",")
         male_suffixes = df.values[:, 0].tolist()
         female_suffixes = df.values[:, 1].tolist()
         return male_suffixes, female_suffixes

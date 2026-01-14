@@ -75,7 +75,4 @@ Results and datasets are arrays. Should be in the same order. Example:
 
 To plot, make sure to install `kaleido`.
 
-> [!WARNING]
-> If you're on Windows 11, install `kaleido==0.1.0post1`. Installing another version and launching using the command line will cause a hang on Windows 11. See [this plotly issue](https://github.com/plotly/Kaleido/issues/126) for more information.
-
 `pip install --user kaleido`

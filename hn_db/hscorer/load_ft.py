@@ -1,7 +1,9 @@
 import fasttext
 
 
-def load_ft(path: str = "data/ft/cc.fr.300.bin") -> fasttext.FastText._FastText:
+def load_ft(
+    path: str = "data/ft/cc.fr.300.bin/cc.fr.300.bin",
+) -> fasttext.FastText._FastText:
     model = fasttext.load_model(path)
     return model
 
