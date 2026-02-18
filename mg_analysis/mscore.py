@@ -453,7 +453,7 @@ def calculate_m_score(
     return MScoreResult(
         dataset=dataset,
         content_type=content_type,
-        bias_rate=bias_rate_human_nouns,  # ← conditioned rate (old behavior)
+        bias_rate=bias_rate_human_nouns,
         total_human_nouns=total_human_nouns,
         total_masc_gen_nouns=total_masc_gen_nouns,
         total_neut=total_neut,
@@ -793,14 +793,18 @@ def run_pareto_analysis(
 
 
 # MG Count Analysis Functions
-def get_mg_count(results: list[dict]) -> pd.DataFrame:
+def get_mg_count(results: list[dict], filter_epicenes: bool = False) -> pd.DataFrame:
     """Extract masculine generic noun counts from results."""
     masc_gen_nouns = []
     dataset_name = results[0]["dataset"] if results else "unknown"
 
     for dataset_result in results:
         masc_gen_logs = dataset_result.get("real_masc_gen_logs", [])
-        masc_gen_nouns.extend([log["masc_gen"] for log in masc_gen_logs])
+        # masc_gen_nouns.extend([log["masc_gen"] for log in masc_gen_logs])
+        for log in masc_gen_logs:
+            if filter_epicenes and log["from_epicene"] == 1:
+                continue
+            masc_gen_nouns.append(log["masc_gen"])
 
     masc_gen_df = pd.DataFrame(masc_gen_nouns, columns=["noun"])
     masc_gen_df = masc_gen_df.value_counts().reset_index()
@@ -872,14 +876,18 @@ def compute_all_m_scores(
 
 
 def compute_mg_counts(
-    loaded_results_e1: list[list[dict]], loaded_results_e2: list[list[dict]]
+    loaded_results_e1: list[list[dict]],
+    loaded_results_e2: list[list[dict]],
+    filter_epicenes: bool = False,
 ) -> tuple[list[pd.DataFrame], list[pd.DataFrame], pd.DataFrame, pd.DataFrame]:
     """Compute MG noun counts for all datasets."""
     logger.info("Computing MG counts...")
 
-    mg_counts_e1 = [get_mg_count(res) for res in loaded_results_e1]
+    mg_counts_e1 = [
+        get_mg_count(res, filter_epicenes=filter_epicenes) for res in loaded_results_e1
+    ]
     mg_counts_e2 = [
-        get_mg_count(res)
+        get_mg_count(res, filter_epicenes=filter_epicenes)
         for res, ds in zip(
             loaded_results_e2, [r[0]["dataset"] for r in loaded_results_e2]
         )
@@ -908,6 +916,7 @@ def generate_all_plots(
     z_score: float = 1.7,
     pdf: bool = False,
     legacy: bool = False,
+    filter_epicenes: bool = False,
 ):
     """Generate all plots."""
     logger.info("Generating plots...")
@@ -1033,6 +1042,7 @@ def generate_all_plots(
         z_score=z_score,
         output_file=str(plot_dir / f"masc_gen_nouns_{suffix}.svg"),
         pdf=pdf,
+        filter_epicenes=filter_epicenes,
     )
 
     logger.info("All plots generated")
@@ -1131,6 +1141,12 @@ def parse_arguments() -> argparse.Namespace:
         type=float,
         default=1.7,
         help="(Z-Plot MG Count only) Z-Score threshold for outlier detection.",
+    )
+
+    parser.add_argument(
+        "--filter-epicenes",
+        action="store_true",
+        help="(Z-Plot MG Count only) Filter out epicene nouns from MG count analysis.",
     )
 
     parser.add_argument(
@@ -1256,7 +1272,7 @@ def main():
 
     # compute MG counts
     mg_counts_e1, mg_counts_e2, mg_total_e1, mg_total_e2 = compute_mg_counts(
-        loaded_results_e1, loaded_results_e2
+        loaded_results_e1, loaded_results_e2, filter_epicenes=args.filter_epicenes
     )
 
     # if Pareto only, run before other plots and exit
@@ -1290,6 +1306,7 @@ def main():
         z_score=args.z_score,
         pdf=args.pdf,
         legacy=args.legacy,
+        filter_epicenes=args.filter_epicenes,  # only affects MG count plot
     )
 
     # if pareto has not been ran yet, run it now

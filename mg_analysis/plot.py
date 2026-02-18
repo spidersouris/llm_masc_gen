@@ -1041,6 +1041,8 @@ def visualize_mg_count(
     output_file: str = "",
     e2: bool = False,
     pdf: bool = False,
+    save_df: bool = True,
+    filter_epicenes: bool = False,
 ):
     """
     Visualize MG counts across datasets with optional outlier detection.
@@ -1054,6 +1056,8 @@ def visualize_mg_count(
     ranks = total_df["rank"].tolist()
 
     # get individual noun count in each df in dfs
+    # Note that some nouns may be epicene nouns; this is normal!
+    # This is because they were used as MG (e.g. with a masculine determiner)
     for df in dfs:
         df_nouns = df["noun"].tolist()
         df_counts = df["count"].tolist()
@@ -1079,6 +1083,23 @@ def visualize_mg_count(
             )
 
     df = pd.DataFrame(all_data)
+    if save_df:
+        df_copy = df.copy()
+        df_copy.pop("Noun")
+        df_copy = df_copy[["RawNoun", "Dataset", "Count", "Rank"]]
+        df_copy = (
+            df_copy.groupby("RawNoun")
+            .agg({"Count": "sum"})
+            .reset_index()
+            .sort_values(by="Count", ascending=False)
+        )
+        csv_name = "mg_count_detailed_e2.csv" if e2 else "mg_count_detailed_e1.csv"
+        csv_name = (
+            csv_name.replace(".csv", "_no_epicenes.csv")
+            if filter_epicenes
+            else csv_name
+        )
+        df_copy.to_csv(f"analyses/{csv_name}", index=False)
 
     if rangee:
         df = df[(df["Rank"] >= rangee[0]) & (df["Rank"] <= rangee[1])]
@@ -1626,7 +1647,7 @@ def create_pareto_plot(
                 ),
                 text=filtered_labels,
                 textposition=improve_text_position(len(filtered_labels)),
-                textfont=dict(size=20),
+                textfont=dict(size=17),
                 name="Non-Pareto optimal",
                 legendgroup="combined",
             ),
@@ -1635,7 +1656,18 @@ def create_pareto_plot(
         )
 
     # Add Experiment 1 Pareto points
+    gpt_x, gpt_y = None, None
     if exp1_pareto["x"]:
+        filtered_labels = []
+
+        for i, label in enumerate(exp1_pareto["labels"]):
+            if label.lower() == "gpt4o_mini":
+                gpt_x = exp1_pareto["x"][i]
+                gpt_y = exp1_pareto["y"][i]
+                filtered_labels.append("")
+            else:
+                filtered_labels.append(label)
+
         fig.add_trace(
             go.Scatter(
                 x=exp1_pareto["x"],
@@ -1650,9 +1682,9 @@ def create_pareto_plot(
                     cmax=neut_max,
                     showscale=False,
                 ),
-                text=exp1_pareto["labels"],
-                textposition=improve_text_position(len(exp1_pareto["labels"])),
-                textfont=dict(size=22, color="black", weight="bold"),
+                text=filtered_labels,
+                textposition=improve_text_position(len(filtered_labels)),
+                textfont=dict(size=20, color="black", weight="bold"),
                 name="Pareto optimal",
                 legendgroup="combined",
             ),
@@ -1729,7 +1761,7 @@ def create_pareto_plot(
                 ),
                 text=exp2_regular["labels"],
                 textposition=improve_text_position(len(exp2_regular["labels"])),
-                textfont=dict(size=20),
+                textfont=dict(size=17),
                 name="Non-Pareto optimal",
                 legendgroup="combined",
                 showlegend=False,
@@ -1767,7 +1799,7 @@ def create_pareto_plot(
                 ),
                 text=filtered_labels,
                 textposition=improve_text_position(len(filtered_labels)),
-                textfont=dict(size=22, color="black", weight="bold"),
+                textfont=dict(size=20, color="black", weight="bold"),
                 name="Pareto optimal",
                 legendgroup="combined",
                 showlegend=False,
@@ -1801,7 +1833,7 @@ def create_pareto_plot(
             text="ministral",
             showarrow=False,
             yshift=20,
-            font=dict(size=20),
+            font=dict(size=17),
             row=1,
             col=1,
         )
@@ -1814,7 +1846,20 @@ def create_pareto_plot(
             showarrow=False,
             yshift=20,
             xshift=8,
-            font=dict(size=20),
+            font=dict(size=15),
+            row=1,
+            col=1,
+        )
+
+    if gpt_x is not None:
+        fig.add_annotation(
+            x=gpt_x,
+            y=gpt_y,
+            text="gpt4o_mini",
+            showarrow=False,
+            yshift=-10,
+            xshift=0,
+            font=dict(size=17, weight="bold", color="black"),
             row=1,
             col=1,
         )
@@ -1826,8 +1871,8 @@ def create_pareto_plot(
             text="gemini",
             showarrow=False,
             yshift=2,
-            xshift=-38,
-            font=dict(size=22, weight="bold", color="black"),
+            xshift=-45,
+            font=dict(size=20, weight="bold", color="black"),
             row=2,
             col=1,
         )
