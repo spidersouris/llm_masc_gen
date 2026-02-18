@@ -378,9 +378,7 @@ def calculate_m_score(
     weights: Optional[tuple[int, ...]] = None,
 ) -> MScoreResult:
     """
-    Calculate M-score-related metrics.
-    Bias rate here is CONDITIONED ON texts with ≥1 human noun
-    (same semantics as old code).
+    Get MG/GFL metrics for Pareto analysis (function should probably renamed)
     """
     total_human_nouns = 0
     total_masc_gen_nouns = 0
