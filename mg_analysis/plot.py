@@ -1525,7 +1525,6 @@ def visualize_marker_types(
         if pdf:
             save_to_pdf(output_file)
 
-
 def create_pareto_plot(
     m_scores,
     m_scores_e2_filtered,
@@ -1535,415 +1534,233 @@ def create_pareto_plot(
     pdf: bool = False,
 ):
     """
-    Create a Pareto front plot for Experiment 1 and Experiment 2.
+    Create a Pareto front plot for Experiment 1 and Experiment 2,
+    side by side.
     """
+    # ACL two-column figure (6.75 in)
+    # 648 px = 6.75 in at 96 dpi
+    width = 648
+    height = 350
 
-    # https://stackoverflow.com/a/72389439
-    def improve_text_position(n):
-        """Alternate text positions between top center
-        and bottom center for n annotations."""
-        positions = ["top center", "bottom center"]
-        return [positions[i % 2] for i in range(n)]
+    # manual label placement: pixel shift from the marker, per subplot
+    # (xshift, yshift)
+    default_shift = (0, 12)
+    label_shifts = {
+        1: {
+            "oracle": (25, 0),
+            "claude-3-haiku": (12, -12),
+            "gpt4o_mini": (0, -20),
+            "gemini": (25, -5),
+            "ministral": (-30, 0),
+        },
+        2: {
+            "claude-3-haiku": (0, 15),
+            "gpt4o_mini": (40, 0),
+            "gemini": (-30, 0),
+            "ministral": (25, -10),
+            "mistral-small": (-40, 0),
+        },
+    }
 
     fig = make_subplots(
-        rows=2,
-        cols=1,
+        rows=1,
+        cols=2,
         subplot_titles=(
             "<b>Non-MG Instructions (Exp. 1)</b>",
             "<b>MG Instructions (Exp. 2)</b>",
         ),
-        vertical_spacing=0.15,
-        shared_xaxes=False,
+        shared_yaxes=True,
+        horizontal_spacing=0.06,
     )
+    fig.update_annotations(font=dict(size=12))
 
-    # collect all N values for synchronized color scale
-    all_neut_values = []
-    all_mg_values = []
-    all_incl_values = []
+    # synchronized color scale across both experiments
+    neut_values = [
+        m["pareto_vector"]["NEUT_rate"] for m in m_scores + m_scores_e2_filtered
+    ]
+    neut_min, neut_max = min(neut_values), max(neut_values)
 
-    for m in m_scores + m_scores_e2_filtered:
-        vec = m["pareto_vector"]
-        all_neut_values.append(vec["NEUT_rate"])
-        all_mg_values.append(vec["MG_rate"])
-        all_incl_values.append(vec["INCL_rate"])
+    experiments = [
+        (m_scores, pareto_front_e1, 1, [50, 70]),
+        (m_scores_e2_filtered, pareto_front_e2, 2, [70, 85]),
+    ]
 
-    neut_min = min(all_neut_values)
-    neut_max = max(all_neut_values)
+    for results, pareto_front, col, x_range in experiments:
+        pareto = {"x": [], "y": [], "z": [], "labels": []}
+        regular = {"x": [], "y": [], "z": [], "labels": []}
 
-    # Exp. 1
-    exp1_regular = {"x": [], "y": [], "z": [], "labels": []}
-    exp1_pareto = {"x": [], "y": [], "z": [], "labels": []}
-
-    for m in m_scores:
-        vec = m["pareto_vector"]
-        dataset = m["dataset"]
-
-        data = {
-            "x": vec["MG_rate"],
-            "y": vec["INCL_rate"],
-            "z": vec["NEUT_rate"],
-            "label": dataset,
-        }
-
-        if dataset in pareto_front_e1:
-            exp1_pareto["x"].append(data["x"])
-            exp1_pareto["y"].append(data["y"])
-            exp1_pareto["z"].append(data["z"])
-            exp1_pareto["labels"].append(data["label"])
-        else:
-            exp1_regular["x"].append(data["x"])
-            exp1_regular["y"].append(data["y"])
-            exp1_regular["z"].append(data["z"])
-            exp1_regular["labels"].append(data["label"])
-
-    # Add Experiment 1 non-Pareto points
-    # Manually extract and hide ministral and claude-3-haiku points
-    # to change their position later and fix overlap
-    ministral_x, ministral_y = None, None
-    claude_x, claude_y = None, None
-    if exp1_regular["x"]:
-        filtered_labels = []
-
-        for i, label in enumerate(exp1_regular["labels"]):
-            if label.lower() == "ministral":
-                ministral_x = exp1_regular["x"][i]
-                ministral_y = exp1_regular["y"][i]
-                filtered_labels.append("")
-            elif label.lower() == "claude-3-haiku":
-                claude_x = exp1_regular["x"][i]
-                claude_y = exp1_regular["y"][i]
-                filtered_labels.append("")
-            else:
-                filtered_labels.append(label)
+        for m in results:
+            vec = m["pareto_vector"]
+            points = pareto if m["dataset"] in pareto_front else regular
+            points["x"].append(vec["MG_rate"])
+            points["y"].append(vec["INCL_rate"])
+            points["z"].append(vec["NEUT_rate"])
+            points["labels"].append(m["dataset"])
 
         fig.add_trace(
             go.Scatter(
-                x=exp1_regular["x"],
-                y=exp1_regular["y"],
-                mode="markers+text",
+                x=regular["x"],
+                y=regular["y"],
+                mode="markers",
                 marker=dict(
                     symbol="cross-thin",
-                    size=20,
-                    color=exp1_regular["z"],
+                    size=11,
+                    color=regular["z"],
                     colorscale="Agsunset",
                     cmin=neut_min,
                     cmax=neut_max,
-                    showscale=True,
+                    showscale=col == 1,
                     colorbar=dict(
-                        title=dict(text="N̂ (%) ↑"),
-                        x=1.15,
-                        len=0.4,
+                        title=dict(text="Neutral Language Rate N̂ (↑)", side="right", font=dict(size=12)),
+                        tickfont=dict(size=10),
+                        thickness=10,
+                        len=1,
+                        x=1.02,
                         y=0.5,
                         yanchor="middle",
-                        xanchor="center",
                     ),
                     line=dict(
-                        width=2,
+                        width=1.8,
+                        color=regular["z"],
+                        colorscale="Agsunset",
                         cmin=neut_min,
                         cmax=neut_max,
-                        color=exp1_regular["z"],
-                        colorscale="Agsunset",
                     ),
                 ),
-                text=filtered_labels,
-                textposition=improve_text_position(len(filtered_labels)),
-                textfont=dict(size=17),
                 name="Non-Pareto optimal",
-                legendgroup="combined",
+                legendgroup="non_pareto",
+                showlegend=col == 1,
             ),
             row=1,
-            col=1,
+            col=col,
         )
-
-    # Add Experiment 1 Pareto points
-    gpt_x, gpt_y = None, None
-    if exp1_pareto["x"]:
-        filtered_labels = []
-
-        for i, label in enumerate(exp1_pareto["labels"]):
-            if label.lower() == "gpt4o_mini":
-                gpt_x = exp1_pareto["x"][i]
-                gpt_y = exp1_pareto["y"][i]
-                filtered_labels.append("")
-            else:
-                filtered_labels.append(label)
 
         fig.add_trace(
             go.Scatter(
-                x=exp1_pareto["x"],
-                y=exp1_pareto["y"],
-                mode="markers+text",
+                x=pareto["x"],
+                y=pareto["y"],
+                mode="markers",
                 marker=dict(
                     symbol="circle",
-                    size=22,
-                    color=exp1_pareto["z"],
+                    size=12,
+                    color=pareto["z"],
                     colorscale="Agsunset",
                     cmin=neut_min,
                     cmax=neut_max,
                     showscale=False,
+                    line=dict(width=1, color="black"),
                 ),
-                text=filtered_labels,
-                textposition=improve_text_position(len(filtered_labels)),
-                textfont=dict(size=20, color="black", weight="bold"),
                 name="Pareto optimal",
-                legendgroup="combined",
+                legendgroup="pareto",
+                showlegend=col == 1,
             ),
             row=1,
-            col=1,
+            col=col,
         )
 
-        # Connect Pareto front points for Exp 1
-        pareto_sorted = sorted(
-            zip(exp1_pareto["x"], exp1_pareto["y"]), key=lambda p: p[0]
-        )
+        pareto_sorted = sorted(zip(pareto["x"], pareto["y"]), key=lambda p: p[0])
         fig.add_trace(
             go.Scatter(
                 x=[p[0] for p in pareto_sorted],
                 y=[p[1] for p in pareto_sorted],
                 mode="lines",
-                line=dict(color="rgba(0, 0, 0, 0.7)", width=3, dash="dash"),
-                name="Pareto Line",
-                legendgroup="combined",
-                showlegend=False,
+                line=dict(color="rgba(0, 0, 0, 0.7)", width=2, dash="dash"),
+                name="Pareto Frontier",
+                legendgroup="line",
+                showlegend=col == 1,
             ),
             row=1,
-            col=1,
+            col=col,
         )
 
-    # Exp. 2
-    exp2_regular = {"x": [], "y": [], "z": [], "labels": []}
-    exp2_pareto = {"x": [], "y": [], "z": [], "labels": []}
-
-    for m in m_scores_e2_filtered:
-        vec = m["pareto_vector"]
-        dataset = m["dataset"]
-
-        data = {
-            "x": vec["MG_rate"],
-            "y": vec["INCL_rate"],
-            "z": vec["NEUT_rate"],
-            "label": dataset,
-        }
-
-        if dataset in pareto_front_e2:
-            exp2_pareto["x"].append(data["x"])
-            exp2_pareto["y"].append(data["y"])
-            exp2_pareto["z"].append(data["z"])
-            exp2_pareto["labels"].append(data["label"])
-        else:
-            exp2_regular["x"].append(data["x"])
-            exp2_regular["y"].append(data["y"])
-            exp2_regular["z"].append(data["z"])
-            exp2_regular["labels"].append(data["label"])
-
-    # Add Experiment 2 non-Pareto points
-    if exp2_regular["x"]:
-        fig.add_trace(
-            go.Scatter(
-                x=exp2_regular["x"],
-                y=exp2_regular["y"],
-                mode="markers+text",
-                marker=dict(
-                    symbol="cross-thin",
-                    size=20,
-                    color=exp2_regular["z"],
-                    colorscale="Agsunset",
-                    cmin=neut_min,
-                    cmax=neut_max,
-                    showscale=False,
-                    line=dict(
-                        width=2,
-                        cmin=neut_min,
-                        cmax=neut_max,
-                        color=exp2_regular["z"],
-                        colorscale="Agsunset",
+        for points, bold in [(regular, False), (pareto, True)]:
+            for x, y, label in zip(points["x"], points["y"], points["labels"]):
+                xshift, yshift = label_shifts[col].get(label, default_shift)
+                fig.add_annotation(
+                    x=x,
+                    y=y,
+                    text=label,
+                    showarrow=False,
+                    xshift=xshift,
+                    yshift=yshift,
+                    font=dict(
+                        size=11,
+                        color="black",
+                        weight="bold" if bold else "normal",
                     ),
-                ),
-                text=exp2_regular["labels"],
-                textposition=improve_text_position(len(exp2_regular["labels"])),
-                textfont=dict(size=17),
-                name="Non-Pareto optimal",
-                legendgroup="combined",
-                showlegend=False,
-            ),
-            row=2,
-            col=1,
-        )
+                    row=1,
+                    col=col,
+                )
 
-    # Add Experiment 2 Pareto points
-    gemini_x, gemini_y = None, None
-    if exp2_pareto["x"]:
-        filtered_labels = []
+        fig.update_xaxes(range=x_range, dtick=5, row=1, col=col)
 
-        for i, label in enumerate(exp2_pareto["labels"]):
-            if label.lower() == "gemini":
-                gemini_x = exp2_pareto["x"][i]
-                gemini_y = exp2_pareto["y"][i]
-                filtered_labels.append("")
-            else:
-                filtered_labels.append(label)
+    fig.add_annotation(
+        text="Masculine Generics Rate M̂ (%) ↓",
+        xref="paper",
+        yref="paper",
+        x=0.5,
+        y=0,
+        yshift=-34,
+        showarrow=False,
+        font=dict(size=13),
+    )
 
-        fig.add_trace(
-            go.Scatter(
-                x=exp2_pareto["x"],
-                y=exp2_pareto["y"],
-                mode="markers+text",
-                marker=dict(
-                    symbol="circle",
-                    size=20,
-                    color=exp2_pareto["z"],
-                    colorscale="Agsunset",
-                    cmin=neut_min,
-                    cmax=neut_max,
-                    showscale=False,
-                ),
-                text=filtered_labels,
-                textposition=improve_text_position(len(filtered_labels)),
-                textfont=dict(size=20, color="black", weight="bold"),
-                name="Pareto optimal",
-                legendgroup="combined",
-                showlegend=False,
-            ),
-            row=2,
-            col=1,
-        )
-
-        # Connect Pareto front points for Exp 2
-        pareto_sorted = sorted(
-            zip(exp2_pareto["x"], exp2_pareto["y"]), key=lambda p: p[0]
-        )
-        fig.add_trace(
-            go.Scatter(
-                x=[p[0] for p in pareto_sorted],
-                y=[p[1] for p in pareto_sorted],
-                mode="lines",
-                line=dict(color="rgba(0, 0, 0, 0.7)", width=3, dash="dash"),
-                name="Pareto Line",
-                legendgroup="combined",
-                showlegend=False,
-            ),
-            row=2,
-            col=1,
-        )
-
-    if ministral_x is not None:
-        fig.add_annotation(
-            x=ministral_x,
-            y=ministral_y,
-            text="ministral",
-            showarrow=False,
-            yshift=20,
-            font=dict(size=17),
-            row=1,
-            col=1,
-        )
-
-    if claude_x is not None:
-        fig.add_annotation(
-            x=claude_x,
-            y=claude_y,
-            text="claude-3-haiku",
-            showarrow=False,
-            yshift=20,
-            xshift=8,
-            font=dict(size=15),
-            row=1,
-            col=1,
-        )
-
-    if gpt_x is not None:
-        fig.add_annotation(
-            x=gpt_x,
-            y=gpt_y,
-            text="gpt4o_mini",
-            showarrow=False,
-            yshift=-10,
-            xshift=0,
-            font=dict(size=17, weight="bold", color="black"),
-            row=1,
-            col=1,
-        )
-
-    if gemini_x is not None:
-        fig.add_annotation(
-            x=gemini_x,
-            y=gemini_y,
-            text="gemini",
-            showarrow=False,
-            yshift=2,
-            xshift=-45,
-            font=dict(size=20, weight="bold", color="black"),
-            row=2,
-            col=1,
-        )
-
-    fig.for_each_xaxis(lambda a: a.title.update(font=dict(size=22)))
-
-    # Update axes for Experiment 1
     fig.update_xaxes(
-        title_text="M̂ (%) ↓",
         showgrid=True,
         gridwidth=1,
         gridcolor="lightgray",
-        range=[50, 70],
-        row=1,
-        col=1,
+        showline=True,
+        linewidth=1,
+        linecolor="lightgray",
+        mirror=True,
+        ticks="outside",
+        ticklen=3,
+        title_font=dict(size=13),
+        tickfont=dict(size=11),
     )
     fig.update_yaxes(
-        title_text="Î (%) ↑",
-        showgrid=True,
-        gridwidth=1,
-        gridcolor="lightgray",
         range=[0, 1],
-        row=1,
-        col=1,
-    )
-
-    # Update axes for Experiment 2
-    fig.update_xaxes(
-        title_text="M̂ (%) ↓",
+        dtick=0.25,
         showgrid=True,
         gridwidth=1,
         gridcolor="lightgray",
-        range=[70, 85],
-        row=2,
-        col=1,
+        showline=True,
+        linewidth=1,
+        linecolor="lightgray",
+        mirror=True,
+        ticks="outside",
+        ticklen=3,
+        title_font=dict(size=13),
+        tickfont=dict(size=11),
     )
-    fig.update_yaxes(
-        title_text="Î (%) ↑",
-        showgrid=True,
-        gridwidth=1,
-        gridcolor="lightgray",
-        range=[0, 1],
-        row=2,
-        col=1,
-    )
+    fig.update_yaxes(title_text="Inclusive Language Rate Î (↑)", row=1, col=1)
 
-    # Update layout
     fig.update_layout(
-        title=dict(
-            text="Pareto Optimization of Models/Datasets<br>for M̂, Î and N̂",
-            x=0.42,
-            y=0.96,
-            xanchor="center",
-            font=dict(size=25),
-        ),
-        width=900,
-        height=1000,
+        # title=dict(
+        #     text="Pareto Optimization of Models/Datasets for M̂, Î and N̂",
+        #     x=0.48,
+        #     y=0.97,
+        #     xanchor="center",
+        #     yanchor="top",
+        #     font=dict(size=14),
+        # ),
+        width=width,
+        height=height,
+        margin=dict(t=25, b=70, l=58, r=78),
         legend=dict(
-            x=1.3,
-            y=0.98,
-            xanchor="right",
-            yanchor="top",
             orientation="h",
-            font=dict(size=25),
+            x=0.48,
+            y=-0.15,
+            xanchor="center",
+            yanchor="top",
+            font=dict(size=12),
         ),
+        font=dict(size=11, family="Arial"),
         hovermode=False,
         plot_bgcolor="white",
-        font=dict(size=25),
     )
 
     if output_file != "":
-        fig.write_image(output_file, scale=1.8, format="svg")
+        fig.write_image(output_file, scale=1, format="svg")
         if pdf:
             save_to_pdf(output_file)
