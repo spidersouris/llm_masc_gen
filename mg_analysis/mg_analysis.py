@@ -1,19 +1,20 @@
+import argparse
+import html as ihtml
 import json
 import os
 import re
-import argparse
+from typing import Dict, List
+
 import pandas as pd
-import html as ihtml
 from bs4 import BeautifulSoup
-from typing import List, Dict
-from spacy.tokens import Doc
-from tqdm import tqdm
+from filtering import nlp_main
 from load_lists import (
-    get_masc_gen_list,
     get_epicene_list,
     get_human_list,
+    get_masc_gen_list,
 )
-from filtering import nlp_main
+from spacy.tokens import Doc
+from tqdm import tqdm
 
 epicene_list = get_epicene_list()
 masc_gen_list = get_masc_gen_list()
@@ -50,6 +51,7 @@ incl_pairs = [
     "une ou un",
 ]
 neutral_prons = ["iel", "iels", "ielle", "ielles", "celleux", "elleux", "ille", "illes"]
+# not found in human/LLM outputs
 uppers = sorted(
     [
         "E",
