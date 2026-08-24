@@ -890,7 +890,7 @@ def visualize_bias_rate(
             y=datasets_with_emoji,
             x=masc_gen_percentages,
             orientation="h",
-            name="MG ≥ 1 overall",
+            name="MG rate (all responses)",
             marker=dict(
                 color="#756bb1",
                 pattern=dict(shape="/", fgcolor="#4C4C4C"),
@@ -899,11 +899,11 @@ def visualize_bias_rate(
             textposition="inside",
             insidetextanchor="start",
             error_x=(
-                ci_to_error(masc_gen_percentages, datasets, "hn_e1", ci_map)
+                ci_to_error(masc_gen_percentages, datasets, "e1", ci_map)
                 if ci
                 else None
             ),
-            legendgroup="E1",
+            legend="legend",
         ),
         row=1,
         col=1,
@@ -914,14 +914,13 @@ def visualize_bias_rate(
             y=datasets_with_emoji,
             x=bias_rates,
             orientation="h",
-            # add spacing so that both legends match subplots position
-            name="MG ≥ 1 with human nouns                                   ",
+            name="MG rate (responses with human nouns only)",
             marker=dict(color="#bcbddc"),
             text=[f"{x:.2f}%" for x in bias_rates],
             textposition="inside",
             insidetextanchor="start",
-            error_x=ci_to_error(bias_rates, datasets, "e1", ci_map) if ci else None,
-            legendgroup="E1",
+            error_x=ci_to_error(bias_rates, datasets, "hn_e1", ci_map) if ci else None,
+            legend="legend",
         ),
         row=1,
         col=1,
@@ -934,7 +933,7 @@ def visualize_bias_rate(
                 y=e2_datasets,
                 x=e2_masc,
                 orientation="h",
-                name="MG ≥ 1 overall",
+                name="MG rate (all responses)",
                 marker=dict(
                     color="#d6616b",
                     pattern=dict(shape="/", fgcolor="#4C4C4C"),
@@ -944,9 +943,9 @@ def visualize_bias_rate(
                 insidetextanchor="start",
                 textfont=dict(color="white"),
                 error_x=(
-                    ci_to_error(e2_masc, e2_raw_names, "hn_e2", ci_map) if ci else None
+                    ci_to_error(e2_masc, e2_raw_names, "e2", ci_map) if ci else None
                 ),
-                legendgroup="E2",
+                legend="legend2",
             ),
             row=1,
             col=2,
@@ -957,15 +956,15 @@ def visualize_bias_rate(
                 y=e2_datasets,
                 x=e2_bias,
                 orientation="h",
-                name="MG ≥ 1 with human nouns",
+                name="MG rate (responses with human nouns only)",
                 marker=dict(color="#e6939a"),
                 text=[f"{x:.2f}%" for x in e2_bias],
                 textposition="inside",
                 insidetextanchor="start",
                 error_x=(
-                    ci_to_error(e2_bias, e2_raw_names, "e2", ci_map) if ci else None
+                    ci_to_error(e2_bias, e2_raw_names, "hn_e2", ci_map) if ci else None
                 ),
-                legendgroup="E2",
+                legend="legend2"
             ),
             row=1,
             col=2,
@@ -989,7 +988,14 @@ def visualize_bias_rate(
             yanchor="bottom",
             y=1.02,
             xanchor="center",
-            x=0.5,
+            x=0.2,
+        ),
+        legend2=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="center",
+            x=0.8,
         ),
         uniformtext_minsize=16,
         uniformtext_mode="show",
