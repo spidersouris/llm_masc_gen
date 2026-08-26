@@ -17,3 +17,10 @@ Training requires having `cc.fr.300.bin ` in the `data/ft/` folder (you should c
 `python classify.py [-h] [--disagreement_type DISAGREEMENT_TYPE] {tlfi_recursive,demonette} sum_prob positive_df_path disagreement_df_path`
 
 Classifying requires having `cc.fr.300.bin ` in the `data/ft/` folder (you should create it). French FastText 300-dimension word vectors can be downloaded from [here](https://dl.fbaipublicfiles.com/fasttext/vectors-crawl/cc.fr.300.bin.gz).
+
+## Ablation Study
+
+`python ablation.py [-h] [--human_pkl_path HUMAN_PKL_PATH] [--non_human_pkl_path NON_HUMAN_PKL_PATH] [--model {lr,xgboost}] [--latex_table]`
+
+Measures how much each HScorer feature group contributes to binary HN classification, by
+retraining the classifier while leaving features out.

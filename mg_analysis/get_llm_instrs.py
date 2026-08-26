@@ -1,7 +1,9 @@
-import pandas as pd
+import argparse
 import os
+
 import numpy as np
-from filtering import nlp_main, has_neutral
+import pandas as pd
+from filtering import has_neutral, nlp_main
 
 
 def load_filtered_df(name: str) -> pd.DataFrame:
@@ -11,6 +13,34 @@ def load_filtered_df(name: str) -> pd.DataFrame:
         )
 
     return pd.read_pickle(f"dfs/{name}/{name}_filtered_df.pkl")
+
+
+def load_mg_only_df(name: str) -> pd.DataFrame:
+    if name not in ["alpaca", "hh_rlhf", "oasst2", "oracle"]:
+        raise ValueError(
+            "name must be either 'alpaca', 'hh_rlhf', 'oasst2', or 'oracle'"
+        )
+
+    return pd.read_pickle(f"dfs/{name}/{name}_instructions_mg_only_df.pkl")
+
+
+def load_mg_only_instructions(create_pkl: bool = False) -> pd.DataFrame:
+    if not create_pkl:
+        all_instr = pd.read_pickle("dfs/instructions_mg_only.pkl")
+        print(f"Loaded {len(all_instr)} instructions from instructions_mg_only.pkl")
+        return all_instr
+
+    print("Creating instructions_mg_only.pkl")
+
+    all_instr = pd.concat(
+        [load_mg_only_df(name) for name in ["oasst2", "oracle", "hh_rlhf", "alpaca"]],
+        ignore_index=True,
+    )
+
+    all_instr.to_pickle("dfs/instructions_mg_only.pkl")
+    print(f"Saved {len(all_instr)} instructions to dfs/instructions_mg_only.pkl")
+
+    return all_instr
 
 
 def load_instructions(
@@ -118,3 +148,24 @@ def create_sample(all_instr, sample_size: int = 10000):
 
     print(f"Sampled {len(sampled_instr)} instructions")
     return sampled_instr
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument(
+        "--e2",
+        action="store_true",
+        help="Get MG only instructions from Experiment 2",
+    )
+
+    args = parser.parse_args()
+
+    if args.e2:
+        load_mg_only_instructions(create_pkl=True)
+    else:
+        all_instr = load_instructions(create_pkl=True)
+        all_instr.to_pickle("dfs/instructions_llm_inference.pkl")
+        print(
+            f"Saved {len(all_instr)} instructions to dfs/instructions_llm_inference.pkl"
+        )

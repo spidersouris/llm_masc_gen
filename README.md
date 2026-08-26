@@ -1,6 +1,6 @@
 # llm_masc_gen
 
-Repository for the [**Man Made Language Models? Evaluating LLMs’ Perpetuation of Masculine Generics Bias**](https://arxiv.org/abs/2502.10577) paper.
+Repository for the [**Man Made Language Models? Evaluating LLMs’ Perpetuation of Masculine Generics Bias**](https://arxiv.org/abs/2502.10577) paper, accepted at [EMNLP 2026 Main](https://2026.emnlp.org/).
 
 ## Repository Structure
 
@@ -21,15 +21,18 @@ Repository for the [**Man Made Language Models? Evaluating LLMs’ Perpetuation 
     - [dbs](hn_db/tlfi_scraping/dbs)
     - [words](hn_db/tlfi_scraping/words) | scraped words
 - [mg_analysis](mg_analysis) | files used for the masculine generics use in LLMs analysis
+  - [analyses](mg_analysis/analyses) | CSV tables (bias rates, marker rates, Pareto, MG counts)
   - [dfs](mg_analysis/dfs) | instructions/outputs DataFrames
   - [eval](mg_analysis/eval) | data used to evaluate GPT 4o-mini ICL classifier
     - [annot](mg_analysis/eval/annot) | annotation files and script
   - [instr_outputs_mg_results](mg_analysis/instr_outputs_mg_results)
-    - [qual_analysis](mg_analysis/instr_outputs_mg_results/qual_analysis) | examples of LLMs' responses with inclusive markers (except neutral). Note that some examples are wrongly detected as inclusive (mainly due to the "upper" rule which was triggered in case of weird generation or some acronym usage) — those were manually filtered before plotting language markers results (see [line 904 of mg_analysis/plot.py](https://github.com/spidersouris/llm_masc_gen/blob/main/mg_analysis/plot.py#L904)).
+    - [qual_analysis](mg_analysis/instr_outputs_mg_results/qual_analysis) | examples of LLMs' responses with inclusive markers (except neutral). Note that some examples are wrongly detected as inclusive (mainly due to the "upper" rule which was triggered in case of weird generation or some acronym usage) — those were manually filtered before plotting language markers results (see [the `fp_idx_e1`/`fp_idx_e2` lists in mg_analysis/plot.py](https://github.com/spidersouris/llm_masc_gen/blob/main/mg_analysis/plot.py#L1318)).
     - [real](mg_analysis/instr_outputs_mg_results/real) | results after GPT 4o-mini validation
     - [unreal](mg_analysis/instr_outputs_mg_results/unreal) | results before GPT 4o-mini validation
   - [llm_responses](mg_analysis/llm_responses) | retrieved LLMs' responses to instructions
   - [nouns_to_filter](mg_analysis/nouns_to_filter) | nouns not mainly used as human nouns filtered for analysis
+  - [plots](mg_analysis/plots) | generated figures (SVG, and PDF versions in [pdfs](mg_analysis/plots/pdfs))
+- [PROMPTS.md](PROMPTS.md) | system/user prompts used for the GPT-4o mini human noun validation
 
 ## Human Noun Database
 
@@ -53,7 +56,9 @@ See [/hn_db/hscorer/README.md](/hn_db/hscorer/README.md) for usage.
 
 ## Analyzing Masculine Generics Use in LLM Instructions/Outputs
 
-See [/mg_analysis/README.md](/mg_analysis/README.md) for details.
+See [/mg_analysis/README.md](/mg_analysis/README.md) for the full pipeline, and the
+[Reproducing the paper's figures and tables](/mg_analysis/README.md#reproducing-the-papers-figures-and-tables)
+section to regenerate every figure and table of the paper.
 
 ## Requirements
 

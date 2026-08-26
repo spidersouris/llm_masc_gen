@@ -277,7 +277,7 @@ def analyze_dataframe(
     current_text_idx = 0
 
     dataset_groups = {
-        "human_instr": ["oracle", "oasst2"],
+        "human": ["oracle", "oasst2"],
         "llm_prop": ["gemini", "gpt4o_mini", "claude-3-haiku"],
         "llm_local": ["ministral", "llama", "mistral-small"],
     }

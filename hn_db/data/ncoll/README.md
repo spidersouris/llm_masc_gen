@@ -1,0 +1,1 @@
+French collective nouns used from the [GeNRe][https://github.com/spidersouris/genre] project.
