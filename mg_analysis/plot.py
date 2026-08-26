@@ -798,7 +798,7 @@ def visualize_bias_rate(
     pdf: bool = False,
 ) -> None:
     """
-    Visualize bias rates (MG use rates) across datasets.
+    Visualize bias rates (MG usage rates) across datasets.
     """
     template = "plotly_white"
     font_size = 20
@@ -964,7 +964,7 @@ def visualize_bias_rate(
                 error_x=(
                     ci_to_error(e2_bias, e2_raw_names, "hn_e2", ci_map) if ci else None
                 ),
-                legend="legend2"
+                legend="legend2",
             ),
             row=1,
             col=2,
@@ -973,7 +973,7 @@ def visualize_bias_rate(
     fig.update_layout(
         barmode="group",
         title=dict(
-            text="<b>Masculine Generics (MG) Use Rate In Responses</b>",
+            text="<b>Masculine Generics (MG) Usage Rate In Responses</b>",
             x=0.5,
             y=0.98,
             font=dict(size=font_size),
@@ -1051,8 +1051,29 @@ def visualize_mg_count(
     filter_epicenes: bool = False,
 ):
     """
-    Visualize MG counts across datasets with optional outlier detection.
+    Visualize MG counts across datasets with optional outlier detection (z-score).
     """
+    Z_SCORE_T10N = {
+        "humain": "human",
+        "amateur": "amateur",
+        "acteur": "actor",
+        "enseignant": "teacher",
+        "voyageur": "traveler",
+        "assistant": "assistant",
+        "investisseur": "investor",
+        "professeur": "professor",
+        "spectateur": "spectator",
+        "avocat": "lawyer",
+        "chef": "chief",
+        "garçon": "boy",
+        "entrepreneur": "entrepreneur",
+        "juge": "judge",
+        "voisin": "neighbor",
+        "lecteur": "reader",
+        "directeur": "director",
+        "contributeur": "contributor",
+    }
+
     template = "plotly_white"
     font_size = 14
 
@@ -1071,20 +1092,29 @@ def visualize_mg_count(
         # we can get the dataset name from any row
         dataset = df["dataset"].tolist()[0]
 
+        if dataset in {"oracle", "oasst2"}:
+            continue
+
         for noun, count in zip(df_nouns, df_counts):
+            translation = Z_SCORE_T10N.get(noun, "")
+            translation_legend = (
+                f'<br>"<i>{translation}</i>"' if translation != noun else ""
+            )
             all_data.append(
                 {
                     "Noun": "<b>"
                     + str(ranks[nouns.index(noun)])
-                    + '</b>. "'
+                    + "</b>. "
                     + noun
-                    + '"<br> ('
+                    + translation_legend
+                    + "<br> ("
                     + str(total_df[total_df["noun"] == noun]["count"].tolist()[0])
                     + " total)",
                     "Count": count,
                     "Rank": ranks[nouns.index(noun)],
                     "Dataset": dataset,
                     "RawNoun": noun,
+                    "Translation": translation,
                 }
             )
 
@@ -1149,6 +1179,11 @@ def visualize_mg_count(
             noun = row["RawNoun"]
             dataset = row["Dataset"]
             zscore = row["Z_Score"]
+            translation = row["Translation"]
+            if not translation:
+                raise KeyError(
+                    f"Missing English translation for outlier noun {noun}, update Z_SCORE_T10N"
+                )
             if noun not in zscore_dict:
                 zscore_dict[noun] = {}
             zscore_dict[noun][dataset] = zscore
@@ -1531,6 +1566,7 @@ def visualize_marker_types(
         if pdf:
             save_to_pdf(output_file)
 
+
 def create_pareto_plot(
     m_scores,
     m_scores_e2_filtered,
@@ -1617,7 +1653,11 @@ def create_pareto_plot(
                     cmax=neut_max,
                     showscale=col == 1,
                     colorbar=dict(
-                        title=dict(text="Neutral Language Rate N̂ (↑)", side="right", font=dict(size=12)),
+                        title=dict(
+                            text="Neutral Language Rate N̂ (↑)",
+                            side="right",
+                            font=dict(size=12),
+                        ),
                         tickfont=dict(size=10),
                         thickness=10,
                         len=1,
