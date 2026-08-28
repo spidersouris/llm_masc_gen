@@ -2,6 +2,10 @@
 
 Repository for the [**Man Made Language Models? Evaluating LLMs’ Perpetuation of Masculine Generics Bias**](https://arxiv.org/abs/2502.10577) paper, accepted at [EMNLP 2026 Main](https://2026.emnlp.org/).
 
+<p align="center">
+  <img src="assets/methodology.svg" width="900">
+</p>
+
 ## Repository Structure
 
 - [hn_db](hn_db) | files used for the human noun database
