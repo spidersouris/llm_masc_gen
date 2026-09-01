@@ -129,7 +129,25 @@ Output: `instr_outputs_mg_results/{real|unreal}/{dataset_group}/{dataset}_{conte
 
 Each candidate human noun detected in step 6 is validated in context by GPT-4o mini.
 
-The exact system and user prompts are in [PROMPTS.md](../PROMPTS.md).
+The exact system and user prompts are in [send_gpt_batch.py](send_gpt_batch.py).
+
+#### 7.1 Send batch files to GPT-4o mini for validation
+
+The `OPENAI_API_KEY` environment variable must be set first.
+
+```
+python send_gpt_batch.py [-h] [--json_file JSON_FILE] --batch_file BATCH_FILE --description DESCRIPTION [--e2]
+                         [--max_results MAX_RESULTS] [--is_local] [--dataset DATASET] [--content_type CONTENT_TYPE]
+                         [--output_file_id OUTPUT_FILE_ID] [--output_file_name OUTPUT_FILE_NAME]
+                         {write,send,validate}
+```
+
+**Modes**:
+- **write**: write the GPT-4o mini batch files locally. Requires --json_file, --dataset, and --content_type.
+- **send**: send the written batch file specified as --batch_file to OpenAI servers. Requires --batch_file, --description.
+- **validate**: validate batch results specified as --output_file_id with Pyantic. Requires output_file_id.
+
+#### 7.2 Process results to get final data
 
 ```
 python gpt_eval.py [-h] [--gpt_output_files GPT_OUTPUT_FILES [GPT_OUTPUT_FILES ...]]
