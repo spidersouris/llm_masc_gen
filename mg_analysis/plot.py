@@ -1574,15 +1574,13 @@ def create_pareto_plot(
     pareto_front_e2,
     output_file: str = "",
     pdf: bool = False,
+    vertical: bool = False,
 ):
-    """
-    Create a Pareto front plot for Experiment 1 and Experiment 2,
-    side by side.
-    """
+    """Create a Pareto front plot for Experiment 1 and Experiment 2."""
     # ACL two-column figure (6.75 in)
     # 648 px = 6.75 in at 96 dpi
-    width = 648
-    height = 350
+    width = 400 if vertical else 648
+    height = 650 if vertical else 350
 
     # manual label placement: pixel shift from the marker, per subplot
     # (xshift, yshift)
@@ -1605,14 +1603,15 @@ def create_pareto_plot(
     }
 
     fig = make_subplots(
-        rows=1,
-        cols=2,
+        rows=2 if vertical else 1,
+        cols=1 if vertical else 2,
         subplot_titles=(
             "<b>Non-MG Instructions (Exp. 1)</b>",
             "<b>MG Instructions (Exp. 2)</b>",
         ),
-        shared_yaxes=True,
+        shared_yaxes="all" if vertical else True,
         horizontal_spacing=0.06,
+        vertical_spacing=0.12,
     )
     fig.update_annotations(font=dict(size=12))
 
@@ -1627,7 +1626,8 @@ def create_pareto_plot(
         (m_scores_e2_filtered, pareto_front_e2, 2, [70, 85]),
     ]
 
-    for results, pareto_front, col, x_range in experiments:
+    for results, pareto_front, exp, x_range in experiments:
+        row, col = (exp, 1) if vertical else (1, exp)
         pareto = {"x": [], "y": [], "z": [], "labels": []}
         regular = {"x": [], "y": [], "z": [], "labels": []}
 
@@ -1651,7 +1651,7 @@ def create_pareto_plot(
                     colorscale="Agsunset",
                     cmin=neut_min,
                     cmax=neut_max,
-                    showscale=col == 1,
+                    showscale=exp == 1,
                     colorbar=dict(
                         title=dict(
                             text="Neutral Language Rate N̂ (↑)",
@@ -1675,9 +1675,9 @@ def create_pareto_plot(
                 ),
                 name="Non-Pareto optimal",
                 legendgroup="non_pareto",
-                showlegend=col == 1,
+                showlegend=exp == 1,
             ),
-            row=1,
+            row=row,
             col=col,
         )
 
@@ -1698,9 +1698,9 @@ def create_pareto_plot(
                 ),
                 name="Pareto optimal",
                 legendgroup="pareto",
-                showlegend=col == 1,
+                showlegend=exp == 1,
             ),
-            row=1,
+            row=row,
             col=col,
         )
 
@@ -1713,15 +1713,15 @@ def create_pareto_plot(
                 line=dict(color="rgba(0, 0, 0, 0.7)", width=2, dash="dash"),
                 name="Pareto Frontier",
                 legendgroup="line",
-                showlegend=col == 1,
+                showlegend=exp == 1,
             ),
-            row=1,
+            row=row,
             col=col,
         )
 
         for points, bold in [(regular, False), (pareto, True)]:
             for x, y, label in zip(points["x"], points["y"], points["labels"]):
-                xshift, yshift = label_shifts[col].get(label, default_shift)
+                xshift, yshift = label_shifts[exp].get(label, default_shift)
                 fig.add_annotation(
                     x=x,
                     y=y,
@@ -1734,11 +1734,11 @@ def create_pareto_plot(
                         color="black",
                         weight="bold" if bold else "normal",
                     ),
-                    row=1,
+                    row=row,
                     col=col,
                 )
 
-        fig.update_xaxes(range=x_range, dtick=5, row=1, col=col)
+        fig.update_xaxes(range=x_range, dtick=5, row=row, col=col)
 
     fig.add_annotation(
         text="Masculine Generics Rate M̂ (%) ↓",
@@ -1779,7 +1779,9 @@ def create_pareto_plot(
         title_font=dict(size=13),
         tickfont=dict(size=11),
     )
-    fig.update_yaxes(title_text="Inclusive Language Rate Î (↑)", row=1, col=1)
+    fig.update_yaxes(title_text="Inclusive Language Rate Î (↑)", col=1)
+    if vertical:
+        fig.update_yaxes(showticklabels=True)
 
     fig.update_layout(
         # title=dict(
@@ -1792,11 +1794,11 @@ def create_pareto_plot(
         # ),
         width=width,
         height=height,
-        margin=dict(t=25, b=70, l=58, r=78),
+        margin=dict(t=25, b=110 if vertical else 70, l=58, r=78),
         legend=dict(
             orientation="h",
-            x=0.48,
-            y=-0.15,
+            x=0.5 if vertical else 0.48,
+            y=-0.1 if vertical else -0.15,
             xanchor="center",
             yanchor="top",
             font=dict(size=12),
@@ -1807,6 +1809,10 @@ def create_pareto_plot(
     )
 
     if output_file != "":
+        output_file = output_file[:-4] + "_vertical.svg" if vertical else output_file
         fig.write_image(output_file, scale=1, format="svg")
         if pdf:
+            output_file = (
+                output_file[:-4] + "_vertical.svg" if vertical else output_file
+            )
             save_to_pdf(output_file)

@@ -734,6 +734,7 @@ def run_pareto_analysis(
     ci: bool = False,
     n_boot: int = 10000,
     pdf: bool = False,
+    vertical: bool = False,
 ):
     """Run complete Pareto analysis for both experiments."""
     logger.info("Running Pareto analysis...")
@@ -786,6 +787,7 @@ def run_pareto_analysis(
         pareto_front_e2,
         output_file="plots/pareto.svg",
         pdf=pdf,
+        vertical=vertical,
     )
     logger.info("Saved Pareto plot")
 
@@ -1194,6 +1196,12 @@ def parse_arguments() -> argparse.Namespace:
         help="Run Pareto analysis only and exit.",
     )
 
+    parser.add_argument(
+        "--vertical",
+        action="store_true",
+        help="Stack the Pareto plot experiments vertically.",
+    )
+
     return parser.parse_args()
 
 
@@ -1284,6 +1292,7 @@ def main():
             ci=args.ci == "pareto",
             n_boot=args.n_boot_pareto,
             pdf=args.pdf,
+            vertical=args.vertical,
         )
         logger.info("Pareto analysis complete. Exiting.")
         return
@@ -1316,6 +1325,7 @@ def main():
         ci=args.ci == "pareto",
         n_boot=args.n_boot_pareto,
         pdf=args.pdf,
+        vertical=args.vertical,
     )
 
 
