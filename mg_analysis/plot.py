@@ -1579,8 +1579,9 @@ def create_pareto_plot(
     """Create a Pareto front plot for Experiment 1 and Experiment 2."""
     # ACL two-column figure (6.75 in)
     # 648 px = 6.75 in at 96 dpi
-    width = 400 if vertical else 648
+    width = 648
     height = 650 if vertical else 350
+    font_size = 16 if vertical else 11
 
     # manual label placement: pixel shift from the marker, per subplot
     # (xshift, yshift)
@@ -1602,6 +1603,10 @@ def create_pareto_plot(
         },
     }
 
+    if vertical:
+        label_shifts[1]["claude-3-haiku"] = (-35, -10)
+        label_shifts[2]["claude-3-haiku"] = (0, 10)
+
     fig = make_subplots(
         rows=2 if vertical else 1,
         cols=1 if vertical else 2,
@@ -1613,7 +1618,7 @@ def create_pareto_plot(
         horizontal_spacing=0.06,
         vertical_spacing=0.12,
     )
-    fig.update_annotations(font=dict(size=12))
+    fig.update_annotations(font=dict(size=font_size + 1))
 
     # synchronized color scale across both experiments
     neut_values = [
@@ -1646,7 +1651,7 @@ def create_pareto_plot(
                 mode="markers",
                 marker=dict(
                     symbol="cross-thin",
-                    size=11,
+                    size=font_size,
                     color=regular["z"],
                     colorscale="Agsunset",
                     cmin=neut_min,
@@ -1656,9 +1661,9 @@ def create_pareto_plot(
                         title=dict(
                             text="Neutral Language Rate N̂ (↑)",
                             side="right",
-                            font=dict(size=12),
+                            font=dict(size=font_size + 1),
                         ),
-                        tickfont=dict(size=10),
+                        tickfont=dict(size=font_size - 1),
                         thickness=10,
                         len=1,
                         x=1.02,
@@ -1688,7 +1693,7 @@ def create_pareto_plot(
                 mode="markers",
                 marker=dict(
                     symbol="circle",
-                    size=12,
+                    size=font_size + 1,
                     color=pareto["z"],
                     colorscale="Agsunset",
                     cmin=neut_min,
@@ -1722,6 +1727,8 @@ def create_pareto_plot(
         for points, bold in [(regular, False), (pareto, True)]:
             for x, y, label in zip(points["x"], points["y"], points["labels"]):
                 xshift, yshift = label_shifts[exp].get(label, default_shift)
+                xshift *= font_size / 11
+                yshift *= font_size / 11
                 fig.add_annotation(
                     x=x,
                     y=y,
@@ -1730,7 +1737,7 @@ def create_pareto_plot(
                     xshift=xshift,
                     yshift=yshift,
                     font=dict(
-                        size=11,
+                        size=font_size,
                         color="black",
                         weight="bold" if bold else "normal",
                     ),
@@ -1746,9 +1753,9 @@ def create_pareto_plot(
         yref="paper",
         x=0.5,
         y=0,
-        yshift=-34,
+        yshift=-52 if vertical else -34,
         showarrow=False,
-        font=dict(size=13),
+        font=dict(size=font_size + 2),
     )
 
     fig.update_xaxes(
@@ -1761,8 +1768,8 @@ def create_pareto_plot(
         mirror=True,
         ticks="outside",
         ticklen=3,
-        title_font=dict(size=13),
-        tickfont=dict(size=11),
+        title_font=dict(size=font_size + 2),
+        tickfont=dict(size=font_size),
     )
     fig.update_yaxes(
         range=[0, 1],
@@ -1776,8 +1783,8 @@ def create_pareto_plot(
         mirror=True,
         ticks="outside",
         ticklen=3,
-        title_font=dict(size=13),
-        tickfont=dict(size=11),
+        title_font=dict(size=font_size + 2),
+        tickfont=dict(size=font_size),
     )
     fig.update_yaxes(title_text="Inclusive Language Rate Î (↑)", col=1)
     if vertical:
@@ -1794,16 +1801,21 @@ def create_pareto_plot(
         # ),
         width=width,
         height=height,
-        margin=dict(t=25, b=110 if vertical else 70, l=58, r=78),
+        margin=dict(
+            t=35 if vertical else 25,
+            b=110 if vertical else 70,
+            l=80 if vertical else 58,
+            r=90 if vertical else 78,
+        ),
         legend=dict(
             orientation="h",
             x=0.5 if vertical else 0.48,
-            y=-0.1 if vertical else -0.15,
+            y=-0.11 if vertical else -0.15,
             xanchor="center",
             yanchor="top",
-            font=dict(size=12),
+            font=dict(size=font_size if vertical else 12),
         ),
-        font=dict(size=11, family="Arial"),
+        font=dict(size=font_size, family="Arial"),
         hovermode=False,
         plot_bgcolor="white",
     )
