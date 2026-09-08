@@ -984,14 +984,14 @@ def visualize_bias_rate(
         font=dict(size=font_size - 1),
         margin=dict(pad=10),
         legend=dict(
-            orientation="h",
+            orientation="v",
             yanchor="bottom",
             y=1.02,
             xanchor="center",
             x=0.2,
         ),
         legend2=dict(
-            orientation="h",
+            orientation="v",
             yanchor="bottom",
             y=1.02,
             xanchor="center",
