@@ -1040,7 +1040,6 @@ def visualize_bias_rate(
 
 def visualize_mg_count(
     dfs,  # from mscore/get_mg_count()
-    total_df: pd.DataFrame,
     model_specific: bool = False,
     rangee: list[int] | None = None,
     z_score: float = 1.7,
@@ -1078,6 +1077,18 @@ def visualize_mg_count(
     font_size = 14
 
     all_data = []
+
+    # recompute totals from LLM datasets only
+    # so that "(N total)" labels match LLM human noun count table
+    llm_dfs = [df for df in dfs if not is_human_dataset(df["dataset"].tolist()[0])]
+    total_df = (
+        pd.concat(llm_dfs, ignore_index=True)
+        .groupby("noun")["count"]
+        .sum()
+        .sort_values(ascending=False)
+        .reset_index()
+    )
+    total_df["rank"] = total_df.index + 1
 
     nouns = total_df["noun"].tolist()
     ranks = total_df["rank"].tolist()

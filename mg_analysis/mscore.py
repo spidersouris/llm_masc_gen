@@ -1030,12 +1030,10 @@ def generate_all_plots(
     #     )
 
     mg_counts = mg_counts_e2 if is_e2 else mg_counts_e1
-    mg_total = mg_total_e2 if is_e2 else mg_total_e1
     suffix = "e2" if is_e2 else "e1"
 
     visualize_mg_count(
         mg_counts,
-        total_df=mg_total,
         e2=is_e2,
         model_specific=True,
         rangee=mg_count_range,
@@ -1132,7 +1130,7 @@ def parse_arguments() -> argparse.Namespace:
         "--mg_count_range",
         type=int,
         nargs=2,
-        default=[0, 50],
+        default=[0, 54],
         help="(Z-Plot MG Count only) Range of MG counts to consider.",
     )
 
